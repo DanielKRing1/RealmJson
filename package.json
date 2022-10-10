@@ -1,7 +1,7 @@
 {
-  "name": "rn-click-listener",
-  "version": "1.0.3",
-  "description": "A global click listener that can register callbacks and detect clicks outside of components",
+  "name": "@asianpersonn/realm-json",
+  "version": "1.0.0",
+  "description": "",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -28,10 +28,10 @@
     "ts-jest": "^27.1.1",
     "typescript": "^4.5.4"
   },
-  "keywords": [
-    "react-native",
-    "click",
-    "listener",
-    "outside"
-  ]
+  "keywords": [],
+  "dependencies": {
+    "@asianpersonn/dict-utils": "^1.0.5",
+    "@asianpersonn/metarealm": "^1.0.4",
+    "realm": "^10.21.1"
+  }
 }
