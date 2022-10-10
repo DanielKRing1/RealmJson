@@ -3,7 +3,7 @@ import { Dict } from "../types";
 export type RJCreateParams = {
 } & RJLoadableParams;
 
-export type RJLoadGraphParams = {
+export type RJLoadJsonParams = {
     shouldReloadRealm?: boolean;
 } & RJLoadableParams;
 
@@ -15,13 +15,13 @@ export type RJLoadableParams = {
 
 export type RJDeletePropertiesParams = {
     reloadRealm: () => Promise<Realm>;
-} & RJLoadGraphParams;
+} & RJLoadJsonParams;
 
 export type RJUpdatePropertiesParams = {
     newPropertyNames: string[];
 
     reloadRealm: () => Promise<Realm>;
-} & RJLoadGraphParams;
+} & RJLoadJsonParams;
 
 export type RealmJsonRow = {
     id: string;

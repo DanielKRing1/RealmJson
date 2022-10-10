@@ -7,7 +7,7 @@ import { Dict } from "../types";
 import { gen_NO_COLLECTION_ERROR } from './errors';
 import { RealmJsonManager } from './types';
 
-const createGraphManager = (): RealmJsonManager => {
+const createJsonManager = (): RealmJsonManager => {
     const realmJsonMap: Dict<RealmJson> = {};
     
     const getCollection = (collectionName: string): RealmJson | never => {
@@ -86,7 +86,7 @@ const createGraphManager = (): RealmJsonManager => {
         const allSchemaNames: string[] = MetaRealm.getSchemaNames(metaRealmPath, loadableRealmPath);
 
         // 2. Remove schema name suffix and add to set
-        // (A single Graph creates more than 1 schema; when stripped of their suffixes, they will have identical names)
+        // (A single Json creates more than 1 schema; when stripped of their suffixes, they will have identical names)
         allSchemaNames.forEach((schemaName) => {
             // 2.1. Remove suffix
             const collectionName: string = getBaseNameFromSchemaName(schemaName);
@@ -114,4 +114,4 @@ const createGraphManager = (): RealmJsonManager => {
     }
 }
 
-export default createGraphManager();
+export default createJsonManager();

@@ -1,11 +1,11 @@
-import Realm from 'realm';
-import DictUtils from '@asianpersonn/dict-utils';
+import Realm, { UpdateMode } from 'realm';
 import MetaRealm, { SaveSchemaParams } from '@asianpersonn/metarealm';
 
-import { RealmJson, RealmJsonRow, RJCreateParams, RJDeletePropertiesParams, RJLoadGraphParams } from './types';
+import { RealmJson, RealmJsonRow, RJCreateParams, RJDeletePropertiesParams, RJLoadJsonParams } from './types';
 import { genBaseSchema, JSON_KEY } from '../constants/schemas';
 import { Dict } from '../types';
 import { genJsonSchemaName } from '../constants/naming';
+import { gen_NO_JSON_ROW_ERROR } from './errors';
 
 /**
  * Saves RealmJson Json schema to LoadableSchema table
@@ -15,7 +15,7 @@ import { genJsonSchemaName } from '../constants/naming';
  * @returns 
  */
  export const createRealmJson = async ({ metaRealmPath, loadableRealmPath, collectionName }: RJCreateParams): Promise<RealmJson> => {
-    // 1. Save new Graph Node and Edge schemas
+    // 1. Save new Json Node and Edge schemas
     _saveJsonSchema(metaRealmPath, loadableRealmPath, collectionName);
     
     // 2. Reload LoadableRealm with new schemas, so propertyNames can be accessed from LoadableSchema
@@ -27,14 +27,14 @@ import { genJsonSchemaName } from '../constants/naming';
     return RealmJson;
 };
 
-export const loadRealmJson = async ({ metaRealmPath, loadableRealmPath, collectionName, shouldReloadRealm=true }: RJLoadGraphParams): Promise<RealmJson> => {
-    // 1. Initialize RealmGraph
-    const realmGraph: RealmJson = await initializeRealmJson({ metaRealmPath, loadableRealmPath, collectionName });
+export const loadRealmJson = async ({ metaRealmPath, loadableRealmPath, collectionName, shouldReloadRealm=true }: RJLoadJsonParams): Promise<RealmJson> => {
+    // 1. Initialize RealmJson
+    const realmJson: RealmJson = await initializeRealmJson({ metaRealmPath, loadableRealmPath, collectionName });
 
-    // 2. Reload realm (optional bcus may be loading multiple RealmGraphs)
-    if(shouldReloadRealm) await realmGraph.reloadRealm();
+    // 2. Reload realm (optional bcus may be loading multiple RealmJsons)
+    if(shouldReloadRealm) await realmJson.reloadRealm();
     
-    return realmGraph;
+    return realmJson;
 };
 
 const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectionName }: RJCreateParams): Promise<RealmJson> => {
@@ -51,11 +51,40 @@ const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectio
         return allJsonRows;
     }
 
-    function _getJsonRow(key: string): RealmJsonRow & Realm.Object {
+    /**
+     * 
+     * @param key 
+     * @param create Will create new json row if true; will throw error if false
+     * @returns 
+     */
+    function _getJsonRow(key: string, create: boolean=true): RealmJsonRow & Realm.Object {
         const loadedJsonRealm: Realm = loadRealmSync();
-        const jsonRow: RealmJsonRow & Realm.Object = loadedJsonRealm.objectForPrimaryKey(genJsonSchemaName(collectionName), key);
+        // 1. Get json row
+        let jsonRow: (RealmJsonRow & Realm.Object) | undefined = loadedJsonRealm.objectForPrimaryKey(genJsonSchemaName(collectionName), key);
 
-        return jsonRow
+        // 2. Not exists
+        if(jsonRow === undefined) {
+            // 2.1. Create
+            if(create) jsonRow = _createJsonRow(key);
+            // 2.2. Throw
+            else throw gen_NO_JSON_ROW_ERROR(key);
+        }
+
+        return jsonRow;
+    }
+
+    function _createJsonRow(key: string): RealmJsonRow & Realm.Object | never {
+        const loadedJsonRealm: Realm = loadRealmSync();
+
+        let newJsonRow: RealmJsonRow & Realm.Object;
+        loadedJsonRealm.write(() => {
+            newJsonRow = loadedJsonRealm.create(genJsonSchemaName(collectionName), {
+                id: key,
+                json: {},
+            }, UpdateMode.Never);
+        });
+
+        return newJsonRow;
     }
 
     function getJson(key: string): Dict<any> {
@@ -83,14 +112,6 @@ const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectio
         return allJsonRows.map((jsonRow: RealmJsonRow) => jsonRow.id);
     }
 
-    function setJson(key: string, newJson: Dict<any>): void {
-        const loadedJsonRealm: Realm = loadRealmSync();
-
-        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(key);
-        loadedJsonRealm.write(() => {
-            jsonRow.json = newJson;
-        });
-    };
     /**
      * Delete the RealmJson collection
      * 
@@ -107,6 +128,15 @@ const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectio
 
         // 2. Delete this RealmJson's schemas and reload without schemas
         _deleteJsonSchema({ metaRealmPath, loadableRealmPath, collectionName, reloadRealm });
+    };
+
+    function setJson(key: string, newJson: Dict<any>): void {
+        const loadedJsonRealm: Realm = loadRealmSync();
+
+        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(key);
+        loadedJsonRealm.write(() => {
+            jsonRow.json = newJson;
+        });
     };
     /**
      * Delete a json row
@@ -168,8 +198,8 @@ const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectio
         reloadRealm,
         reloadRealmSync,
 
-        setJson,
         deleteCollection,
+        setJson,
         deleteJson,
         addEntries,
         deleteEntries,
@@ -182,8 +212,8 @@ const _saveJsonSchema = (metaRealmPath, loadableRealmPath, collectionName: strin
     const jsonSchema: Realm.ObjectSchema = genBaseSchema(collectionName);
 
     const saveParams: SaveSchemaParams[] = [jsonSchema].map((schema: Realm.ObjectSchema) => ({ metaRealmPath, loadableRealmPath, schema }));
-    // 2. And save new Graph schemas
-    // (If not Realm is not provided, then it is implied that the Graph is new and should be created)
+    // 2. And save new Json schemas
+    // (If not Realm is not provided, then it is implied that the Json is new and should be created)
     for(let saveParam of saveParams) {
         MetaRealm.saveSchema(saveParam);
     }
@@ -193,7 +223,7 @@ const _deleteJsonSchema = async ({ metaRealmPath, loadableRealmPath, collectionN
     // 1. Get node + edge schema names
     const schemaNames: string[] = [ genJsonSchemaName(collectionName) ];
 
-    // 2. Delete Graph schemas
+    // 2. Delete Json schemas
     for(let schemaName of schemaNames) {
         MetaRealm.rmSchema({ metaRealmPath, loadableRealmPath, schemaName });
     }

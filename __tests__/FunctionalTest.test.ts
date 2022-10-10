@@ -1,5 +1,0 @@
-describe("Package", () => {
-    it("Should", () => {
-
-    });
-});

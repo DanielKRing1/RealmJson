@@ -5,7 +5,7 @@ export const ID_KEY: string = 'id';
 export const JSON_KEY: string = 'json';
 
 /**
- * Create a base schema for node/edge GraphEntities
+ * Create a base schema for node/edge JsonEntities
  *
  * @param schemaName
  * @param properties
