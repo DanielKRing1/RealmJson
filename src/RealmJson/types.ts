@@ -32,7 +32,7 @@ export type RealmJson = {
     getCollectionName: () => string;
     getLoadableRealmPath: () => string;
     getMetaRealmPath: () => string;
-    getJson: (key: string) => Dict<any>;
+    getJson: (rowKey: string) => Dict<any>;
     getAllJson: () => Dict<Dict<any>>;
     getAllJsonKeys: () => string[];
 
@@ -41,9 +41,9 @@ export type RealmJson = {
     reloadRealm: () => Promise<Realm>;
     reloadRealmSync: () => Realm;
 
-    setJson: (key: string, newJson: Dict<any>) => void;
+    setJson: (rowKey: string, newJson: Dict<any>) => void;
     deleteCollection: () => void;
-    deleteJson: (key: string) => void;
-    addEntries: (key: string, entries: Dict<any>) => void;
-    deleteEntries: (key: string, entriesToRm: string[]) => void;
+    deleteJson: (rowKey: string) => void;
+    addEntries: (rowKey: string, entries: Dict<any>) => void;
+    deleteEntries: (rowKey: string, entriesToRm: string[]) => void;
 };
