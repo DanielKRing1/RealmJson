@@ -53,21 +53,21 @@ const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectio
 
     /**
      * 
-     * @param key 
+     * @param rowKey 
      * @param create Will create new json row if true; will throw error if false
      * @returns 
      */
-    function _getJsonRow(key: string, create: boolean=true): RealmJsonRow & Realm.Object {
+    function _getJsonRow(rowKey: string, create: boolean=true): RealmJsonRow & Realm.Object {
         const loadedJsonRealm: Realm = loadRealmSync();
         // 1. Get json row
-        let jsonRow: (RealmJsonRow & Realm.Object) | undefined = loadedJsonRealm.objectForPrimaryKey(genJsonSchemaName(collectionName), key);
+        let jsonRow: (RealmJsonRow & Realm.Object) | undefined = loadedJsonRealm.objectForPrimaryKey(genJsonSchemaName(collectionName), rowKey);
 
         // 2. Not exists
         if(jsonRow === undefined) {
             // 2.1. Create
-            if(create) jsonRow = _createJsonRow(key);
+            if(create) jsonRow = _createJsonRow(rowKey);
             // 2.2. Throw
-            else throw gen_NO_JSON_ROW_ERROR(key);
+            else throw gen_NO_JSON_ROW_ERROR(rowKey);
         }
 
         return jsonRow;
@@ -87,8 +87,8 @@ const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectio
         return newJsonRow;
     }
 
-    function getJson(key: string): Dict<any> {
-        const jsonRow: RealmJsonRow = _getJsonRow(key).toJSON();
+    function getJson(rowKey: string): Dict<any> {
+        const jsonRow: RealmJsonRow = _getJsonRow(rowKey).toJSON();
         
         return jsonRow.json;
     }
@@ -130,10 +130,10 @@ const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectio
         _deleteJsonSchema({ metaRealmPath, loadableRealmPath, collectionName, reloadRealm });
     };
 
-    function setJson(key: string, newJson: Dict<any>): void {
+    function setJson(rowKey: string, newJson: Dict<any>): void {
         const loadedJsonRealm: Realm = loadRealmSync();
 
-        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(key);
+        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(rowKey);
         loadedJsonRealm.write(() => {
             jsonRow.json = newJson;
         });
@@ -141,20 +141,20 @@ const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectio
     /**
      * Delete a json row
      * 
-     * @param key 
+     * @param rowKey 
      */
-    function deleteJson(key: string): void {
+    function deleteJson(rowKey: string): void {
         const loadedJsonRealm: Realm = loadRealmSync();
 
-        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(key);
+        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(rowKey);
         loadedJsonRealm.write(() => {
             loadedJsonRealm.delete(jsonRow);
         });
     };
-    function addEntries(key: string, entries: Dict<any>): void {
+    function addEntries(rowKey: string, entries: Dict<any>): void {
         const loadedJsonRealm: Realm = loadRealmSync();
 
-        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(key);
+        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(rowKey);
         loadedJsonRealm.write(() => {
             jsonRow.json = {
                 ...jsonRow.json,
@@ -168,10 +168,10 @@ const initializeRealmJson = async ({ metaRealmPath, loadableRealmPath, collectio
      * @param key 
      * @param keysToRm 
      */
-    function deleteEntries(key: string, keysToRm: string[]): void {
+    function deleteEntries(rowKey: string, keysToRm: string[]): void {
         const loadedJsonRealm: Realm = loadRealmSync();
 
-        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(key);
+        const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(rowKey);
         loadedJsonRealm.write(() => {
             for(const keyToRm of keysToRm) {
                 delete jsonRow.json[keyToRm];
