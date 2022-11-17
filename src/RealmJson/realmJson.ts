@@ -125,7 +125,7 @@ const initializeRealmJson = async ({
         genJsonSchemaName(collectionName),
         {
           id: key,
-          json: {},
+          jsonStr: "{}",
         },
         UpdateMode.Never
       );
@@ -137,7 +137,7 @@ const initializeRealmJson = async ({
   function getJson(rowKey: string): Dict<any> {
     const jsonRow: RealmJsonRow = _getJsonRow(rowKey).toJSON();
 
-    return jsonRow.json;
+    return JSON.parse(jsonRow.jsonStr);
   }
 
   function getAllJson(): Dict<Dict<any>> {
@@ -145,8 +145,8 @@ const initializeRealmJson = async ({
 
     const allJson: Dict<Dict<any>> = allJsonRows.reduce(
       (acc: Dict<Dict<any>>, cur: RealmJsonRow & Realm.Object) => {
-        const { id, json } = cur;
-        acc[id] = json;
+        const { id, jsonStr } = cur;
+        acc[id] = JSON.parse(jsonStr);
 
         return acc;
       },
@@ -191,7 +191,7 @@ const initializeRealmJson = async ({
 
     const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(rowKey);
     loadedJsonRealm.write(() => {
-      jsonRow.json = newJson;
+      jsonRow.jsonStr = JSON.stringify(newJson);
     });
   }
   /**
@@ -212,10 +212,10 @@ const initializeRealmJson = async ({
 
     const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(rowKey);
     loadedJsonRealm.write(() => {
-      jsonRow.json = {
-        ...jsonRow.json,
+      jsonRow.jsonStr = JSON.stringify({
+        ...JSON.parse(jsonRow.jsonStr),
         ...entries,
-      };
+      });
     });
   }
   /**
@@ -228,10 +228,12 @@ const initializeRealmJson = async ({
     const loadedJsonRealm: Realm = loadRealmSync();
 
     const jsonRow: RealmJsonRow & Realm.Object = _getJsonRow(rowKey);
+    const json: Dict<any> = JSON.parse(jsonRow.jsonStr);
+    for (const keyToRm of keysToRm) {
+      delete json[keyToRm];
+    }
     loadedJsonRealm.write(() => {
-      for (const keyToRm of keysToRm) {
-        delete jsonRow.json[keyToRm];
-      }
+      jsonRow.jsonStr = JSON.stringify(json);
     });
   }
 
